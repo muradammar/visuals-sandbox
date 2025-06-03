@@ -298,7 +298,7 @@ int main(int argc, char *argv[]) {
             SDL_UnlockSurface(surface);
         }
 
-        load_obj(surface, "cube.obj", white);
+        fillTriangle(surface, 100, 100, 200, 500, 300, 250, white);
         SDL_UpdateWindowSurface(window);
 
         //1000 ms / 60 fps ~= 16 ms per frame
