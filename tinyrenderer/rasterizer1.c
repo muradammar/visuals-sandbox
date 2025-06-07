@@ -28,18 +28,11 @@ typedef struct {
 Vec2 orthographic_proj(Vec3 v) {
     Vec2 out;
 
-    // Map [0,1] cube to [-1,1] NDC for correct projection
-    v.x = v.x * 2.0f - 1.0f;
-    v.y = v.y * 2.0f - 1.0f;
-
-    out.x = (int)((v.x + 1.0f) * 0.5f * WIDTH);
-    out.y = (int)(1.0f - ((v.y + 1.0f) * 0.5f) * HEIGHT); // flip y
+    out.x = (int)((150.0 * v.x) + WIDTH / 2);
+    out.y = (int)((HEIGHT / 2) - (150.0 * v.y));
 
     return out;
 }
-
-
-
 
 //helper: set a pixel on a surface
 void set_pixel(SDL_Surface *surface, int x, int y, Uint32 color) {
@@ -145,9 +138,9 @@ void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
 
     //bubble sort algorithm for symmmetry, sort by ascending-y
     //p1 should have smallest y and p3 should have largest y
-    if (x1 > x2) { swapXOR(&x1, &x2); swapXOR(&y1, &y2); }
-    if (x1 > x3) { swapXOR(&x1, &x3); swapXOR(&y1, &y3); }
-    if (x2 > x3) { swapXOR(&x2, &x3); swapXOR(&y2, &y3); }
+    if (y1 > y2) { swapXOR(&x1, &x2); swapXOR(&y1, &y2); }
+    if (y1 > y3) { swapXOR(&x1, &x3); swapXOR(&y1, &y3); }
+    if (y2 > y3) { swapXOR(&x2, &x3); swapXOR(&y2, &y3); }
 
     line(surface, x1, y1, x2, y2, color);
     line(surface, x2, y2, x3, y3, color);
@@ -189,123 +182,4 @@ void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
         }
     }
 
-}
-
-//unfinished
-// void fillTriangle(SDL_Surface* Surface, int x1, int y1, int x2, int y2, int x3, int y3, Uint32 color); {
-
-//     //create a bbox within which to check pixels
-//     int xmin = min3(x1, x2, x3);
-//     int ymin = min3(y1, y2, y3);
-//     int xmax = max3(x1, x2, x3);
-//     int ymax = max3(y1, y2, y3);
-
-//     //iterate through each pixel
-//     for (int i=xmin ; i<xmax ; i++ ) {
-//         for int( j=ymin ; j<ymax ; j++) {
-//             //algorithm to check if in triangle
-//         }
-//     }
-// }
-
-//---------------obj loader---------------------
-Vec3 vertices[MAX_VERTS];
-int vertex_count = 0;
-
-void load_obj(SDL_Surface* surface, const char* filename, Uint32 color) {
-    FILE* f = fopen(filename, "r");
-    if (!f) {
-        printf("Failed to open OBJ file: %s\n", filename);
-        return;
-    }
-
-
-    char line[128];
-    while (fgets(line, sizeof(line), f)) {
-        if (line[0] == 'v' && line[1] == ' ') {
-
-            printf("%c", line[0]);
-            Vec3 v;
-            sscanf(line, "v %f %f %f", &v.x, &v.y, &v.z);
-            vertices[vertex_count++] = v;
-        } else if (line[0] == 'f') {
-            int a, b, c;
-            // Support formats like: f 3//1 7//1 8//1
-            sscanf(line, "f %d//%*d %d//%*d %d//%*d", &a, &b, &c);
-
-            Vec2 p1 = orthographic_proj(vertices[a - 1]);
-            Vec2 p2 = orthographic_proj(vertices[b - 1]);
-            Vec2 p3 = orthographic_proj(vertices[c - 1]);
-
-            drawTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, color);
-        }
-
-    }
-
-    fclose(f);
-}
-
-//----------------------------------------------
-
-int main(int argc, char *argv[]) {
-
-    if (SDL_Init(SDL_INIT_VIDEO)) {
-        printf("Error Initializing SDL: %s\n", SDL_GetError());
-        return -1;
-    }
-
-    SDL_Window* window = SDL_CreateWindow("Bouncy Ball",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
-
-    if (!window) {
-        printf("Window creation failed: %s\n", SDL_GetError());
-        SDL_Quit();
-        return -1;
-    }
-
-    SDL_Surface* surface = SDL_GetWindowSurface(window);
-
-    //colors
-    Uint32 black = SDL_MapRGB(surface->format, 0, 0, 0);
-    Uint32 white = SDL_MapRGB(surface->format, 255, 255, 255);
-    Uint32 red = SDL_MapRGB(surface->format, 255, 0, 0);
-
-    //main loop
-    while (sim_running) {
-
-        printf("Entering main loop\n");
-
-        // Event polling
-        while (SDL_PollEvent(&ev1)) {
-            if (ev1.type == SDL_QUIT) {
-                sim_running = false;
-            }
-        }
-
-        // Lock surface before manipulating pixels
-        if (SDL_LockSurface(surface) == 0) {
-
-            // Fill black
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int x = 0; x < WIDTH; x++) {
-                    set_pixel(surface, x, y, black);
-                }
-            }
-
-
-            
-            SDL_UnlockSurface(surface);
-        }
-
-        fillTriangle(surface, 100, 100, 200, 500, 300, 250, white);
-        SDL_UpdateWindowSurface(window);
-
-        //1000 ms / 60 fps ~= 16 ms per frame
-        SDL_Delay(16);
-    }
-
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 0;
 }
