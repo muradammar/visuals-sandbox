@@ -12,6 +12,73 @@
 #define HEIGHT 600
 #define MAX_VERTS 10000
 
+typedef struct {
+
+    int vertices_count;
+    int faces_count;
+
+    Vec3* vertices;
+    int (*faces)[4]; //3 vertex indices, 1 face normal index
+    Vec3* face_normals;
+
+} Object;
+
+Object load_obj(const char* filename, int max_vertices) {
+
+    Object obj = {0, 0};
+
+    //open the .obj file for reading
+    FILE* fptr = fopen(filename, "r");
+
+    if (fptr == NULL) {
+        printf("Error opening file\n");
+        return obj;
+    }
+
+    //first get the number of vertices and faces
+    char line[128];
+    while (fgets(line, sizeof(line), fptr)) {
+
+        if(line[0] == 'v') {
+            obj.vertices_count++;
+        }
+
+        if(line[0] == 'f') {
+            obj.faces_count++;
+        }
+    }
+
+    //dynamically resize objects arrays
+    obj.vertices = (Vec3*)malloc(obj.vertices_count * sizeof(Vec3));
+    obj.faces = malloc(obj.faces_count * sizeof(int[4]));
+    obj.face_normals = (Vec3*)malloc(obj.faces_count * sizeof(Vec3));
+
+    //re-read the file this time actually reading in the data
+    rewind(fptr);
+    int vertex_counter = 0;
+    int face_counter = 0;
+    while (fgets(line, sizeof(line), fptr)) {
+
+        if (line[0]=='v') {
+            Vec3 v;
+            sscanf(line, "v %f %f %f", &v.x, &v.y, &v.z);
+            obj.vertices[vertex_counter++] = v;
+        }
+
+        else if (line[0] == 'f') {
+            int a, b, c, d;
+            sscanf(line, "f %d//%d %d//%*d %d//%*d", &a, &d, &b, &c);
+            obj.faces[face_counter][0] = a - 1;
+            obj.faces[face_counter][1] = b - 1;
+            obj.faces[face_counter][2] = c - 1;
+            obj.faces[face_counter][3] = d - 1;
+            face_counter++;
+        }
+    }
+
+    return obj;
+}
+
 void load_obj(SDL_Surface* surface, const char* filename, int max_vertices, Uint32 color) {
     static Vec3 vertices[1024];
     static int vertices_count = 0;
@@ -61,7 +128,8 @@ void load_obj(SDL_Surface* surface, const char* filename, int max_vertices, Uint
         Vec2 p2 = orthographic_proj(vertices[b]);
         Vec2 p3 = orthographic_proj(vertices[c]);
 
-        drawTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, color);
+        // drawTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, color);
+        fillTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, color);
     }
 
     // Rotate cube
@@ -69,6 +137,8 @@ void load_obj(SDL_Surface* surface, const char* filename, int max_vertices, Uint
         rotate_x(&vertices[i], 1);
     }
 }
+
+void drawObj(SDL_Surface* surface, Uint32 color)
 
 
 // void load_obj(SDL_Surface* surface, const char* filename, int max_vertices, Uint32 color) {
