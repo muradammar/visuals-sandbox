@@ -48,9 +48,15 @@ void rotate_x(Vec3 *v, int angle) {
     dot(rotation_matrix, v);
 }
 
-// //adjust the face normal after rotation
-// void adjust_face(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 *face) {
+//adjust the face normal after rotation
+void adjust_face(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 *face) {
 
-//     //compute cross product to find normal
-//     Vec3 a = {v2.x - v1.x}
-// }
+    //compute cross product to find normal
+    Vec3 a = {v2.x - v1.x, v2.y - v1.y, v2.z - v1.z};
+    Vec3 b = {v3.x - v1.x, v3.y - v1.y, v3.z - v1.z};
+
+    // a x b
+    face->x = (a.y * b.z) - (a.z * b.y);
+    face->y = (a.z * b.x) - (a.x * b.z);
+    face->z = (a.x * b.y) - (a.y * b.x);
+}
