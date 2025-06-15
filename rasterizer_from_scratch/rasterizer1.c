@@ -43,12 +43,34 @@ Vec2 orthographic_proj(Vec3 v) {
     return out;
 }
 
+//assumes the camera is somewhere in +z looking toward -z
+Vec2 perspective_proj(Vec3 v, Vec3 camera_pos) {
+
+    Vec3 v_proj;
+
+    v_proj.x = v.x * (camera_pos.z  / (camera_pos.z + v.z));
+    v_proj.y = v.y * (camera_pos.z  / (camera_pos.z + v.z));
+    v_proj.z = 0;
+
+    //scaled point can be orthographically projected
+    return orthographic_proj(v_proj);
+}
+
 //helper: set a pixel on a surface
 void set_pixel(SDL_Surface *surface, int x, int y, Uint32 color) {
     if (x < 0 || x >= surface->w || y < 0 || y >= surface->h) return;
 
     Uint8 *pixel_ptr = (Uint8 *)surface->pixels + y * surface->pitch + x * surface->format->BytesPerPixel;
     *(Uint32 *)pixel_ptr = color;
+}
+
+bool backface_culling(Vec3 face_normal, Vec3 view) {
+
+    //compute dot product of two vectors
+    float dot_prod = (face_normal.x * view.x) + (face_normal.y * view.y) + (face_normal.z * view.z);
+    bool is_facing = dot_prod < 0.0;
+
+    return is_facing;
 }
 
 //helper: return the min of 3 ints
@@ -143,17 +165,17 @@ void drawTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
 }
 
 //draw a triangle given 3 cartesian coords and fill it in (scanline rendering)
-void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, int y3, Uint32 color) {
+void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, int y3, Uint32 fill_color, Uint32 line_color) {
+
+    line(surface, x1, y1, x2, y2, line_color);
+    line(surface, x2, y2, x3, y3, line_color);
+    line(surface, x3, y3, x1, y1, line_color);
 
     //bubble sort algorithm for symmmetry, sort by ascending-y
     //p1 should have smallest y and p3 should have largest y
     if (y1 > y2) { swapXOR(&x1, &x2); swapXOR(&y1, &y2); }
     if (y1 > y3) { swapXOR(&x1, &x3); swapXOR(&y1, &y3); }
     if (y2 > y3) { swapXOR(&x2, &x3); swapXOR(&y2, &y3); }
-
-    line(surface, x1, y1, x2, y2, color);
-    line(surface, x2, y2, x3, y3, color);
-    line(surface, x3, y3, x1, y1, color);
 
     /*
     now the line between p1, and p3 (p13) is guaranteed to be the vertically longest straight line.
@@ -173,7 +195,7 @@ void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
             int ax = x1 + (x3 - x1) * (y - y1) / total_height;
             int bx = x1 + (x2 - x1) * (y - y1) / lower_height;
 
-            line(surface, ax, y, bx, y, color);
+            line(surface, ax, y, bx, y, fill_color);
         }
     }
 
@@ -184,10 +206,10 @@ void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
         for (int y=y2 ; y<=y3 ; y++) {
 
             //sweep the horizontal line
-            int ax = x2 + (x3 - x1) * (y - y1) / total_height;
-            int bx = x2 + (x2 - x1) * (y - y1) / upper_height;
+            int ax = x1 + (x3 - x1) * (y - y1) / total_height;
+            int bx = x2 + (x3 - x2) * (y - y2) / upper_height;
 
-            line(surface, ax, y, bx, y, color);
+            line(surface, ax, y, bx, y, fill_color);
         }
     }
 

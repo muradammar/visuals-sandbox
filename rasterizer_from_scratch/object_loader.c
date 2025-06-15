@@ -75,6 +75,7 @@ Object load_obj(const char* filename, int max_vertices) {
 
         else if (line[0] == 'f') {
             int a, b, c, d;
+            sscanf(line, "f %d/%*d/%d %d/%*d/%*d %d/%*d/%*d", &a, &d, &b, &c);
             sscanf(line, "f %d//%d %d//%*d %d//%*d", &a, &d, &b, &c);
             obj.faces[face_counter][0] = a - 1;
             obj.faces[face_counter][1] = b - 1;
@@ -91,16 +92,9 @@ Object load_obj(const char* filename, int max_vertices) {
     return obj;
 }
 
-bool backface_culling(Vec3 face_normal, Vec3 view) {
 
-    //compute dot product of two vectors
-    float dot_prod = (face_normal.x * view.x) + (face_normal.y * view.y) + (face_normal.z * view.z);
-    bool is_facing = dot_prod < 0.0;
 
-    return is_facing;
-}
-
-void drawObj(SDL_Surface* surface, Object obj, Uint32 color, Vec3 view) {
+void drawObj(SDL_Surface* surface, Object obj, Uint32 line_color, Uint32 fill_color, Vec3 view) {
 
     
     // Draw all stored faces
@@ -113,20 +107,52 @@ void drawObj(SDL_Surface* surface, Object obj, Uint32 color, Vec3 view) {
         int b = obj.faces[i][1];
         int c = obj.faces[i][2];
 
-        Vec2 p1 = orthographic_proj(obj.vertices[a]);
-        Vec2 p2 = orthographic_proj(obj.vertices[b]);
-        Vec2 p3 = orthographic_proj(obj.vertices[c]);
+        // Vec2 p1 = orthographic_proj(obj.vertices[a]);
+        // Vec2 p2 = orthographic_proj(obj.vertices[b]);
+        // Vec2 p3 = orthographic_proj(obj.vertices[c]);
 
-        // drawTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, color);
-        drawTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, color);
+        Vec3 camera_pos = {0, 0, 3};
+        Vec2 p1 = perspective_proj(obj.vertices[a], camera_pos);
+        Vec2 p2 = perspective_proj(obj.vertices[b], camera_pos);
+        Vec2 p3 = perspective_proj(obj.vertices[c], camera_pos);
+
+        // drawTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, line_color);
+        fillTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, fill_color, line_color);
         }
 
         }
-
+    
     for (int i=0 ; i<obj.vertices_count ; i++) {
-        rotate_x(&obj.vertices[i], 2);
+        rotate(&obj.vertices[i], -1, 1, 1);
+    }
+
+    for (int i=0 ; i<obj.faces_count ; i++) {
+
+        int v_idx1 = obj.faces[i][0];
+        int v_idx2 = obj.faces[i][1];
+        int v_idx3 = obj.faces[i][2];
+        int fn_idx = obj.faces[i][3];
+
+        adjust_face(obj.vertices[v_idx1], obj.vertices[v_idx2], obj.vertices[v_idx3], &obj.face_normals[fn_idx]);
+        normalize(&obj.face_normals[fn_idx]);
     }
 }
+
+//     for (int i=0 ; i<obj.faces_count ; i++) {
+
+//         int v_idx1 = obj.faces[i][0];
+//         int v_idx2 = obj.faces[i][1];
+//         int v_idx3 = obj.faces[i][2];
+//         int fn_idx = obj.faces[i][3];
+
+//         rotate_x(&obj.vertices[v_idx1], 1);
+//         rotate_x(&obj.vertices[v_idx2], 1);
+//         rotate_x(&obj.vertices[v_idx3], 1);
+
+        // adjust_face(obj.vertices[v_idx1], obj.vertices[v_idx2], obj.vertices[v_idx3], &obj.face_normals[fn_idx]);
+        // normalize(&obj.face_normals[fn_idx]);
+//     }
+// }
 
 int main(int argc, char *argv[]) {
 
@@ -155,7 +181,8 @@ int main(int argc, char *argv[]) {
     bool sim_running = true;
     SDL_Event ev1;
 
-    Vec3 view = {0.0, 1.0, 0.0};
+    Vec3 view = {0.0, 0.0, -1.0};
+
     Object obj1 = load_obj("cube.obj", MAX_VERTS);
     printf("object loaded");
 
@@ -181,7 +208,7 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            drawObj(surface, obj1, white, view);
+            drawObj(surface, obj1, white, black, view);
 
             SDL_UnlockSurface(surface);
         }
