@@ -99,27 +99,24 @@ void drawObj(SDL_Surface* surface, Object obj, Uint32 line_color, Uint32 fill_co
     
     // Draw all stored faces
     for (int i = 0; i < obj.faces_count; i++) {
-
         //only draw if facing camera
         if (backface_culling(obj.face_normals[obj.faces[i][3]], view)) {
+            int a = obj.faces[i][0];
+            int b = obj.faces[i][1];
+            int c = obj.faces[i][2];
 
-        int a = obj.faces[i][0];
-        int b = obj.faces[i][1];
-        int c = obj.faces[i][2];
+            // Vec2 p1 = orthographic_proj(obj.vertices[a]);
+            // Vec2 p2 = orthographic_proj(obj.vertices[b]);
+            // Vec2 p3 = orthographic_proj(obj.vertices[c]);
 
-        // Vec2 p1 = orthographic_proj(obj.vertices[a]);
-        // Vec2 p2 = orthographic_proj(obj.vertices[b]);
-        // Vec2 p3 = orthographic_proj(obj.vertices[c]);
+            Vec3 camera_pos = {0, 0, 0.15};
+            Vec2 p1 = perspective_proj(obj.vertices[a], camera_pos);
+            Vec2 p2 = perspective_proj(obj.vertices[b], camera_pos);
+            Vec2 p3 = perspective_proj(obj.vertices[c], camera_pos);
 
-        Vec3 camera_pos = {0, 0, 3};
-        Vec2 p1 = perspective_proj(obj.vertices[a], camera_pos);
-        Vec2 p2 = perspective_proj(obj.vertices[b], camera_pos);
-        Vec2 p3 = perspective_proj(obj.vertices[c], camera_pos);
-
-        // drawTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, line_color);
-        fillTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, fill_color, line_color);
-        }
-
+            // drawTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, line_color);
+            fillTriangle(surface, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, fill_color, line_color);
+            }
         }
     
     for (int i=0 ; i<obj.vertices_count ; i++) {
@@ -183,7 +180,7 @@ int main(int argc, char *argv[]) {
 
     Vec3 view = {0.0, 0.0, -1.0};
 
-    Object obj1 = load_obj("cube.obj", MAX_VERTS);
+    Object obj1 = load_obj("batsignal.obj", MAX_VERTS);
     printf("object loaded");
 
     //main loop

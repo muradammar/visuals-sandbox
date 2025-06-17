@@ -167,10 +167,6 @@ void drawTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
 //draw a triangle given 3 cartesian coords and fill it in (scanline rendering)
 void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, int y3, Uint32 fill_color, Uint32 line_color) {
 
-    line(surface, x1, y1, x2, y2, line_color);
-    line(surface, x2, y2, x3, y3, line_color);
-    line(surface, x3, y3, x1, y1, line_color);
-
     //bubble sort algorithm for symmmetry, sort by ascending-y
     //p1 should have smallest y and p3 should have largest y
     if (y1 > y2) { swapXOR(&x1, &x2); swapXOR(&y1, &y2); }
@@ -195,6 +191,10 @@ void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
             int ax = x1 + (x3 - x1) * (y - y1) / total_height;
             int bx = x1 + (x2 - x1) * (y - y1) / lower_height;
 
+            //shorten the bounds of the triangle cause its causing the lines not to be rendered
+            /* need to see if there's a better way to do this */
+            // if (ax > bx) { ax=ax-3 ; bx=bx+3; } else { ax=ax+3 ; bx=bx-3; }
+
             line(surface, ax, y, bx, y, fill_color);
         }
     }
@@ -209,8 +209,13 @@ void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
             int ax = x1 + (x3 - x1) * (y - y1) / total_height;
             int bx = x2 + (x3 - x2) * (y - y2) / upper_height;
 
+            // if (ax > bx) { ax=ax-3 ; bx=bx+3; } else { ax=ax+3 ; bx=bx-3; }
+
             line(surface, ax, y, bx, y, fill_color);
         }
     }
 
+    line(surface, x1, y1, x2, y2, line_color);
+    line(surface, x2, y2, x3, y3, line_color);
+    line(surface, x3, y3, x1, y1, line_color);
 }
