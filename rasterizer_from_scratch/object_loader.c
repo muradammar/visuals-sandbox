@@ -109,7 +109,7 @@ void drawObj(SDL_Surface* surface, Object obj, Uint32 line_color, Uint32 fill_co
             // Vec2 p2 = orthographic_proj(obj.vertices[b]);
             // Vec2 p3 = orthographic_proj(obj.vertices[c]);
 
-            Vec3 camera_pos = {0, 0, 0.15};
+            Vec3 camera_pos = {0, 0, 2};
             Vec2 p1 = perspective_proj(obj.vertices[a], camera_pos);
             Vec2 p2 = perspective_proj(obj.vertices[b], camera_pos);
             Vec2 p3 = perspective_proj(obj.vertices[c], camera_pos);
@@ -120,7 +120,7 @@ void drawObj(SDL_Surface* surface, Object obj, Uint32 line_color, Uint32 fill_co
         }
     
     for (int i=0 ; i<obj.vertices_count ; i++) {
-        rotate(&obj.vertices[i], -1, 1, 1);
+        rotate(&obj.vertices[i], 0, 1, 0);
     }
 
     for (int i=0 ; i<obj.faces_count ; i++) {
@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
 
     Vec3 view = {0.0, 0.0, -1.0};
 
-    Object obj1 = load_obj("batsignal.obj", MAX_VERTS);
+    Object obj1 = load_obj("cube.obj", MAX_VERTS);
     printf("object loaded");
 
     //main loop

@@ -23,6 +23,17 @@ a 2D screen from 3D points.
 bool sim_running = true;
 SDL_Event ev1;
 
+typedef struct {
+
+    int vertices_count;
+    int faces_count;
+
+    Vec3* vertices;
+    int (*faces)[4]; //3 vertex indices, 1 face normal index
+    Vec3* face_normals;
+
+} Object;
+
 //3D vector
 typedef struct {
     float x, y, z;
@@ -218,4 +229,21 @@ void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
     line(surface, x1, y1, x2, y2, line_color);
     line(surface, x2, y2, x3, y3, line_color);
     line(surface, x3, y3, x1, y1, line_color);
+}
+
+/*
+for each polygon/face
+    for each pixel in polygon
+        if polygon's pixel-depth < current pixel-depth
+            current pixel depth = polygon pixel depth
+*/
+
+void update_zbuffer(int width, int height, float z_buffer[width][height], int polygon_count, int faces[polygon_count][4], Object obj) {
+
+    for (int i=0 ; i<polygon_count ; i++) {
+
+        //determine the min bounding box for this triangle
+        int xmin, ymin, xmax, ymax;
+        
+    }
 }
