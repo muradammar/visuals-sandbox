@@ -1,4 +1,4 @@
-computing, mathematics, and visuals go hand in hand (in hand). Here are a bunch of messy projects I've undertaken to:
+computing, mathematics, and visuals go hand in hand (in hand). Here are a bunch of projects I've undertaken to:
 
 - explore cool patterns
 - create visual simulations
