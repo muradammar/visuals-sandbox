@@ -19,9 +19,15 @@ a 2D screen from 3D points.
 #define HEIGHT 600
 #define MAX_VERTS 10000
 
-// Global vars
-bool sim_running = true;
-SDL_Event ev1;
+//3D vector
+typedef struct {
+    float x, y, z;
+} Vec3;
+
+//2D vector
+typedef struct {
+    float x, y;
+} Vec2;
 
 typedef struct {
 
@@ -33,16 +39,6 @@ typedef struct {
     Vec3* face_normals;
 
 } Object;
-
-//3D vector
-typedef struct {
-    float x, y, z;
-} Vec3;
-
-//2D vector
-typedef struct {
-    float x, y;
-} Vec2;
 
 //create an orthographic projection of a 3D point onto a 2D plane
 Vec2 orthographic_proj(Vec3 v) {
@@ -234,16 +230,59 @@ void fillTriangle(SDL_Surface* surface, int x1, int y1, int x2, int y2, int x3, 
 /*
 for each polygon/face
     for each pixel in polygon
-        if polygon's pixel-depth < current pixel-depth
-            current pixel depth = polygon pixel depth
+        if pixel in polygon
+            if polygon's pixel-depth < current pixel-depth
+                current pixel depth = polygon pixel depth
 */
 
-void update_zbuffer(int width, int height, float z_buffer[width][height], int polygon_count, int faces[polygon_count][4], Object obj) {
+float signed_triangle_area (int ax, int ay, int bx, int by, int cx, int cy) {
+    return (0.5)*(by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx);
+}
+
+void update_zbuffer(SDL_Surface* surface, int width, int height, float z_buffer[width][height], int polygon_count, Vec3 faces[polygon_count][3], Object obj, Vec3 camera_pos) {
 
     for (int i=0 ; i<polygon_count ; i++) {
 
         //determine the min bounding box for this triangle
         int xmin, ymin, xmax, ymax;
+
+        //project the face onto the screen to get xy coords of each point in the triangle
+        Vec2 p1 = perspective_proj(faces[i][0], camera_pos);
+        Vec2 p2 = perspective_proj(faces[i][1], camera_pos);
+        Vec2 p3 = perspective_proj(faces[i][2], camera_pos);
         
+        //3-element bubble sort
+        xmax = (int)((p1.x > p2.x) ? (p1.x > p3.x) ? p1.x : p3.x : (p2.x > p3.x) ? p2.x : p3.x);
+        ymax = (int)((p1.y > p2.y) ? (p1.y > p3.y) ? p1.y : p3.y : (p2.y > p3.y) ? p2.y : p3.y);
+        xmin = (int)((p1.x < p2.x) ? (p1.x < p3.x) ? p1.x : p3.x : (p2.x < p3.x) ? p2.x : p3.x);
+        ymin = (int)((p1.y < p2.y) ? (p1.y < p3.y) ? p1.y : p3.y : (p2.y < p3.y) ? p2.y : p3.y);
+
+        //iterate through the min bounding box
+        for (int j=xmin ; j<xmax ; j++) {
+            for (int k=ymin ; k<ymax ; k++) {
+
+                //use barycentric coords to determine if in triangle
+                float area = signed_triangle_area(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+
+                float alpha = signed_triangle_area(j, k, p2.x, p2.y, p3.x, p3.y) / area;
+                float beta = signed_triangle_area(j, k, p3.x, p3.y, p1.x, p1.y) / area;
+                float gamma = signed_triangle_area(j, k, p1.x, p1.y, p2.x, p2.y) / area;
+
+                if (alpha > 0.0 && alpha < 1.0 && beta < 0.0 && beta > 1.0 && gamma < 0.0 && gamma < 1.0) {
+                    
+                    float z1 = faces[i][0].z;
+                    float z2 = faces[i][1].z;
+                    float z3 = faces[i][2].z;
+
+                    float pixel_depth = (alpha * z1 + beta * z2 + gamma * z3);
+
+                    if (pixel_depth < z_buffer[i][j]) {
+                        z_buffer[i][j] = pixel_depth;
+                        Uint32 color = (0xFFFFFF) * (100 - pixel_depth);
+                        set_pixel(surface, i, j, color);
+                    }
+                }
+            }
+        }
     }
 }

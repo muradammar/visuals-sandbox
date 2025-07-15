@@ -1,3 +1,7 @@
+/*
+gcc object_loader.c rasterizer1.c transformer.c -IC:\SDL2\include -LC:\SDL2\lib -lmingw32 -lSDL2main -lSDL2 -o object.exe
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -183,6 +187,8 @@ int main(int argc, char *argv[]) {
     Object obj1 = load_obj("cube.obj", MAX_VERTS);
     printf("object loaded");
 
+    float z_buffer[HEIGHT][WIDTH];
+
     //main loop
     while (sim_running) {
 
@@ -198,7 +204,7 @@ int main(int argc, char *argv[]) {
         // Lock surface before manipulating pixels
         if (SDL_LockSurface(surface) == 0) {
 
-            // Fill black
+            // Fill black and init z_buffer
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
                     set_pixel(surface, x, y, black);

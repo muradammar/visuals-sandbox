@@ -9,3 +9,4 @@
 - none today, many solved in the days leading up to today
 ### next steps
 - looking into z-buffering so I can load more complex obejcts. 
+- the scale of this project is growing and I need to start structuring my files better and following good software principles
